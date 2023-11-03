@@ -46,3 +46,19 @@ export const getAllCustomers = async (_req: Request, res: Response): Promise<voi
         }
     }
 }
+
+export const getCustomerById = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const {id} = req.params;
+        const customer: Customer | null = await prisma.customer.findUnique({
+            where: {id: Number(id)}
+        });
+        res.status(200).json(customer);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            res.status(500).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'An unknown error occurred.' });
+        }
+    }
+}
