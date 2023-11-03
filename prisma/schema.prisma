@@ -1,0 +1,116 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  roleId    Int      @default(1)
+  firstName String
+  lastName  String
+  address   String
+  zip       Int
+  city      String
+  phone     Int
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Employee {
+  id           Int      @id @default(autoincrement())
+  roleId       Int      @default(0)
+  departmentId Int
+  firstName    String
+  lastName     String
+  email        String   @unique
+  password     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Car {
+  id                   Int      @id @default(autoincrement())
+  customerId           Int
+  registrationNumber   String   @unique
+  vin                  String   @unique
+  brand                String
+  model                String
+  modelVariant         String
+  firstRegistration    DateTime @db.Date
+  mileage              Int
+  lastInspectionDate   DateTime @db.Date
+  lastInspectionResult String
+  lastInspectionKind   String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Status {
+  id          Int    @id @default(autoincrement())
+  description String
+}
+
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model Department {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  statusId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Task {
+  id          Int    @id @default(autoincrement())
+  title       String
+  time        Int
+  description String
+}
+
+model Workflow {
+  id          Int    @id @default(autoincrement())
+  title       String
+  description String
+}
+
+model OrderWorkflow {
+  orderId    Int
+  workflowId Int
+
+  @@id([orderId, workflowId]) // composite id
+}
+
+model WorkflowTask {
+  workflowId Int
+  taskId     Int
+
+  @@id([workflowId, taskId]) // composite id
+}
+
+model OrderWorkflowTask {
+  orderId     Int
+  taskId      Int
+  workflowId  Int
+  statusId    Int
+  startedAt   DateTime
+  completedAt DateTime
+
+  @@id([orderId, workflowId, taskId]) // composite id
+}
