@@ -20,7 +20,7 @@ interface Customer {
 export const createCustomer = async (req: Request, res: Response): Promise<void> => {
     try {
         const {firstName, lastName, address, zip, city, phone, email, password} = req.body;
-        const hashedPassword = await bcrypt.hash(password, 20);
+        const hashedPassword = await bcrypt.hash(password, 10);
         const customer: Customer = await prisma.customer.create({
             data: {firstName, lastName, roleId: 2, address, zip, city, phone, email, password: hashedPassword}
         });
