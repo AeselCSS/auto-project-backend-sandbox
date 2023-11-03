@@ -1,4 +1,5 @@
 import express from 'express';
+import { Request, Response } from 'express';
 import cors from 'cors';
 
 // import routes
@@ -13,6 +14,9 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/", customerRouter, carRouter, roleRouter);
+app.use("/", async (_req: Request, res: Response) => {
+    res.send("Server.js is running🎉")
+})
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
