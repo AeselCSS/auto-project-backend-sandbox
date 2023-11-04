@@ -174,7 +174,7 @@ export const getOrderWorkflowTaskStatuses = async (req: Request, res: Response):
         const orderWithDetails = await prisma.order.findUnique({
             where: { id: Number(id) },
             include: {
-                car: true, // Assuming that you only need the carId and customerId, the actual fields to include would be specified here
+                car: true,
                 status: true,
                 OrderWorkflowTask: {
                     include: {
@@ -190,7 +190,7 @@ export const getOrderWorkflowTaskStatuses = async (req: Request, res: Response):
             res.status(404).json({error: `Order with id ${id} not found`});
             return;
         }
-        const result: formattedOutput = formatOutput({...orderWithDetails, id: Number(id)});
+        const result: formattedOutput = formatOutput(orderWithDetails);
 
             res.status(200).json(result);
     } catch (error) {
