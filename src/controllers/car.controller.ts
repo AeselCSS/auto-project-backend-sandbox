@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
+import errorHandler from "../utility/errorHandler.js";
 
 const prisma = new PrismaClient({
     log: ['query', 'info', 'warn', 'error']
@@ -39,12 +40,34 @@ export const createCar = async (req: Request, res: Response): Promise<void> => {
             data: newCar
         });
         res.status(201).json(car);
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ error: error.message });
-        } else {
-            res.status(500).json({ error: 'An unknown error occurred.' });
-        }
+    } catch (error) {
+        errorHandler(error, res)
     }
-}
+};
 
+export const getAllCars = async (_req: Request, res: Response): Promise<void> => {
+    try {
+        const cars: Car[] = await prisma.car.findMany();
+        res.status(200).json(cars);
+    } catch (error) {
+        errorHandler(error, res)
+    }
+};
+
+export const getCarById = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const id: number = Number(req.params.id);
+        const car: Car | null = await prisma.car.findUnique({
+            where: { id }
+        });
+
+        if (!car) {
+            res.status(404).json({error: `Car with id ${id} not found`});
+            return;
+        }
+
+        res.status(200).json(car);
+    } catch (error) {
+        errorHandler(error, res)
+    }
+};

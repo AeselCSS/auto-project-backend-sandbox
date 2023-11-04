@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
+import errorHandler from "../utility/errorHandler.js";
 
 const prisma = new PrismaClient({
     log: ['query', 'info', 'warn', 'error']
@@ -25,27 +26,22 @@ export const createCustomer = async (req: Request, res: Response): Promise<void>
             data: {firstName, lastName, roleId: 2, address, zip, city, phone, email, password: hashedPassword}
         });
         res.status(201).json(customer);
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ error: error.message });
-        } else {
-            res.status(500).json({ error: 'An unknown error occurred.' });
-        }
+    } catch (error) {
+        console.error(error); // Log the error
+        res.status(500).json({
+            error: error instanceof Error ? error.message : 'An unknown error occurred.'
+        });
     }
-}
+};
 
 export const getAllCustomers = async (_req: Request, res: Response): Promise<void> => {
     try {
         const customers: Customer[] = await prisma.customer.findMany();
         res.status(200).json(customers);
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ error: error.message });
-        } else {
-            res.status(500).json({ error: 'An unknown error occurred.' });
-        }
+    } catch (error) {
+        errorHandler(error, res)
     }
-}
+};
 
 export const getCustomerById = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -54,11 +50,7 @@ export const getCustomerById = async (req: Request, res: Response): Promise<void
             where: {id: Number(id)}
         });
         res.status(200).json(customer);
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ error: error.message });
-        } else {
-            res.status(500).json({ error: 'An unknown error occurred.' });
-        }
+    } catch (error) {
+        errorHandler(error, res)
     }
-}
+};

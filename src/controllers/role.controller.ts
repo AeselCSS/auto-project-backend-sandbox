@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { Request, Response } from 'express';
+import errorHandler from "../utility/errorHandler.js";
 
 const prisma = new PrismaClient({
     log: ['query', 'info', 'warn', 'error']
@@ -18,27 +19,19 @@ export const createRole = async (req: Request, res: Response): Promise<void> => 
             data: {name}
         });
         res.status(201).json(role);
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ error: error.message });
-        } else {
-            res.status(500).json({ error: 'An unknown error occurred.' });
-        }
+    } catch (error) {
+        errorHandler(error, res)
     }
-}
+};
 
 export const getAllRoles = async (_req: Request, res: Response): Promise<void> => {
     try {
         const roles: Role[] = await prisma.role.findMany();
         res.status(200).json(roles);
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ error: error.message });
-        } else {
-            res.status(500).json({ error: 'An unknown error occurred.' });
-        }
+    } catch (error) {
+        errorHandler(error, res)
     }
-}
+};
 
 export const getRoleById = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -48,11 +41,7 @@ export const getRoleById = async (req: Request, res: Response): Promise<void> =>
             where: {id: Number(id)}
         });
         res.status(200).json(role);
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ error: error.message });
-        } else {
-            res.status(500).json({ error: 'An unknown error occurred.' });
-        }
+    } catch (error) {
+        errorHandler(error, res)
     }
-}
+};

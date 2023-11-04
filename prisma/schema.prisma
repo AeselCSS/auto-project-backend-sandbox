@@ -14,6 +14,7 @@ datasource db {
 model Customer {
   id        Int      @id @default(autoincrement())
   roleId    Int      @default(1)
+  role      Role     @relation(fields: [roleId], references: [id])
   firstName String
   lastName  String
   address   String
@@ -24,23 +25,32 @@ model Customer {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Car       Car[]
+
+  @@index([roleId])
 }
 
 model Employee {
-  id           Int      @id @default(autoincrement())
-  roleId       Int      @default(0)
+  id           Int        @id @default(autoincrement())
+  roleId       Int        @default(0)
+  role         Role       @relation(fields: [roleId], references: [id])
   departmentId Int
+  department   Department @relation(fields: [departmentId], references: [id])
   firstName    String
   lastName     String
-  email        String   @unique
+  email        String     @unique
   password     String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([roleId])
+  @@index([departmentId])
 }
 
 model Car {
   id                   Int      @id @default(autoincrement())
   customerId           Int
+  customer             Customer @relation(fields: [customerId], references: [id])
   registrationNumber   String   @unique
   vin                  String   @unique
   brand                String
@@ -53,55 +63,84 @@ model Car {
   lastInspectionKind   String
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
+  Order                Order[]
+
+  @@index([customerId])
 }
 
 model Status {
-  id          Int    @id @default(autoincrement())
-  description String
+  id                Int                 @id @default(autoincrement())
+  description       String
+  Order             Order[]
+  OrderWorkflowTask OrderWorkflowTask[]
 }
 
 model Role {
-  id   Int    @id @default(autoincrement())
-  name String
+  id       Int        @id @default(autoincrement())
+  name     String
+  Customer Customer[]
+  Employee Employee[]
 }
 
 model Department {
-  id   Int    @id @default(autoincrement())
-  name String
+  id       Int        @id @default(autoincrement())
+  name     String
+  Employee Employee[]
 }
 
 model Order {
-  id        Int      @id @default(autoincrement())
-  statusId  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                Int                 @id @default(autoincrement())
+  carId             Int
+  statusId          Int
+  car               Car                 @relation(fields: [carId], references: [id])
+  status            Status              @relation(fields: [statusId], references: [id])
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  OrderWorkflow     OrderWorkflow[]
+  OrderWorkflowTask OrderWorkflowTask[]
+
+  @@index([carId])
+  @@index([statusId])
 }
 
 model Task {
-  id          Int    @id @default(autoincrement())
-  title       String
-  time        Int
-  description String
+  id                Int                 @id @default(autoincrement())
+  name              String              @unique
+  time              Float               @db.Float
+  description       String
+  WorkflowTask      WorkflowTask[]
+  OrderWorkflowTask OrderWorkflowTask[]
 }
 
 model Workflow {
-  id          Int    @id @default(autoincrement())
-  title       String
-  description String
+  id                Int                 @id @default(autoincrement())
+  name              String
+  description       String
+  WorkflowTask      WorkflowTask[]
+  OrderWorkflow     OrderWorkflow[]
+  OrderWorkflowTask OrderWorkflowTask[]
 }
 
 model OrderWorkflow {
   orderId    Int
   workflowId Int
+  order      Order    @relation(fields: [orderId], references: [id])
+  workflow   Workflow @relation(fields: [workflowId], references: [id])
 
   @@id([orderId, workflowId]) // composite id
+  @@index([orderId])
+  @@index([workflowId])
 }
 
 model WorkflowTask {
   workflowId Int
   taskId     Int
+  workflow   Workflow @relation(fields: [workflowId], references: [id])
+  task       Task     @relation(fields: [taskId], references: [id])
 
   @@id([workflowId, taskId]) // composite id
+  @@index([workflowId])
+  @@index([taskId])
 }
 
 model OrderWorkflowTask {
@@ -109,8 +148,16 @@ model OrderWorkflowTask {
   taskId      Int
   workflowId  Int
   statusId    Int
-  startedAt   DateTime
-  completedAt DateTime
+  startedAt   DateTime?
+  completedAt DateTime?
+  order       Order     @relation(fields: [orderId], references: [id])
+  task        Task      @relation(fields: [taskId], references: [id])
+  workflow    Workflow  @relation(fields: [workflowId], references: [id])
+  status      Status    @relation(fields: [statusId], references: [id])
 
   @@id([orderId, workflowId, taskId]) // composite id
+  @@index([orderId])
+  @@index([workflowId])
+  @@index([taskId])
+  @@index([statusId])
 }
