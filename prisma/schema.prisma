@@ -1,20 +1,16 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider     = "mysql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 model Customer {
-  id        Int      @id @default(autoincrement())
-  roleId    Int      @default(1)
-  role      Role     @relation(fields: [roleId], references: [id])
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  roleId    String
+  role      Role
   firstName String
   lastName  String
   address   String
@@ -25,16 +21,14 @@ model Customer {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  Car       Car[]
-
-  @@index([roleId])
+  cars      Car[]    @relation("CustomerCars")
+  orders    Order[]  @relation("CustomerOrders")
 }
 
 model Employee {
-  id           Int        @id @default(autoincrement())
-  roleId       Int        @default(0)
-  role         Role       @relation(fields: [roleId], references: [id])
-  departmentId Int
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  role         Role
+  departmentId String     @db.ObjectId
   department   Department @relation(fields: [departmentId], references: [id])
   firstName    String
   lastName     String
@@ -42,122 +36,97 @@ model Employee {
   password     String
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-
-  @@index([roleId])
-  @@index([departmentId])
 }
 
 model Car {
-  id                   Int      @id @default(autoincrement())
-  customerId           Int
-  customer             Customer @relation(fields: [customerId], references: [id])
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  customerId           String   @db.ObjectId
+  customer             Customer @relation(fields: [customerId], references: [id], name: "CustomerCars")
   registrationNumber   String   @unique
   vin                  String   @unique
   brand                String
   model                String
   modelVariant         String
-  firstRegistration    DateTime @db.Date
+  firstRegistration    DateTime
   mileage              Int
-  lastInspectionDate   DateTime @db.Date
+  lastInspectionDate   DateTime
   lastInspectionResult String
   lastInspectionKind   String
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
-  Order                Order[]
-
-  @@index([customerId])
-}
-
-model Status {
-  id                Int                 @id @default(autoincrement())
-  description       String
-  Order             Order[]
-  OrderWorkflowTask OrderWorkflowTask[]
-}
-
-model Role {
-  id       Int        @id @default(autoincrement())
-  name     String
-  Customer Customer[]
-  Employee Employee[]
+  orders               Order[]  @relation("CarOrders")
 }
 
 model Department {
-  id       Int        @id @default(autoincrement())
+  id       String     @id @default(auto()) @map("_id") @db.ObjectId
   name     String
   Employee Employee[]
 }
 
 model Order {
-  id                Int                 @id @default(autoincrement())
-  carId             Int
-  statusId          Int
-  car               Car                 @relation(fields: [carId], references: [id])
-  status            Status              @relation(fields: [statusId], references: [id])
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  OrderWorkflow     OrderWorkflow[]
-  OrderWorkflowTask OrderWorkflowTask[]
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  carId            String             @db.ObjectId
+  car              Car                @relation(fields: [carId], references: [id], name: "CarOrders")
+  status           OrderStatus
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  WorkflowInstance WorkflowInstance[]
+  customerId       String?            @db.ObjectId
+  customer         Customer?          @relation(fields: [customerId], references: [id], name: "CustomerOrders")
+}
 
-  @@index([carId])
-  @@index([statusId])
+model WorkflowInstance {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  workflowId    String         @db.ObjectId
+  workflow      Workflow       @relation(fields: [workflowId], references: [id])
+  orderId       String         @db.ObjectId
+  order         Order          @relation(fields: [orderId], references: [id])
+  status        OrderStatus
+  taskInstances TaskInstance[]
+}
+
+model TaskInstance {
+  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+  taskId             String           @db.ObjectId
+  task               Task             @relation(fields: [taskId], references: [id])
+  workflowInstanceId String           @db.ObjectId
+  workflowInstance   WorkflowInstance @relation(fields: [workflowInstanceId], references: [id])
+  status             TaskStatus
+  comments           String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 }
 
 model Task {
-  id                Int                 @id @default(autoincrement())
-  name              String              @unique
-  time              Float               @db.Float
-  description       String
-  WorkflowTask      WorkflowTask[]
-  OrderWorkflowTask OrderWorkflowTask[]
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  name         String         @unique
+  time         Float
+  description  String
+  TaskInstance TaskInstance[]
 }
 
 model Workflow {
-  id                Int                 @id @default(autoincrement())
-  name              String
-  description       String
-  WorkflowTask      WorkflowTask[]
-  OrderWorkflow     OrderWorkflow[]
-  OrderWorkflowTask OrderWorkflowTask[]
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  description      String
+  WorkflowInstance WorkflowInstance[]
 }
 
-model OrderWorkflow {
-  orderId    Int
-  workflowId Int
-  order      Order    @relation(fields: [orderId], references: [id])
-  workflow   Workflow @relation(fields: [workflowId], references: [id])
-
-  @@id([orderId, workflowId]) // composite id
-  @@index([orderId])
-  @@index([workflowId])
+enum Role {
+  CUSTOMER
+  EMPLOYEE
+  ADMIN
 }
 
-model WorkflowTask {
-  workflowId Int
-  taskId     Int
-  workflow   Workflow @relation(fields: [workflowId], references: [id])
-  task       Task     @relation(fields: [taskId], references: [id])
-
-  @@id([workflowId, taskId]) // composite id
-  @@index([workflowId])
-  @@index([taskId])
+enum OrderStatus {
+  AWAITING_CUSTOMER
+  PENDING
+  IN_PROGRESS
+  COMPLETED
 }
 
-model OrderWorkflowTask {
-  orderId     Int
-  taskId      Int
-  workflowId  Int
-  statusId    Int
-  startedAt   DateTime?
-  completedAt DateTime?
-  order       Order     @relation(fields: [orderId], references: [id])
-  task        Task      @relation(fields: [taskId], references: [id])
-  workflow    Workflow  @relation(fields: [workflowId], references: [id])
-  status      Status    @relation(fields: [statusId], references: [id])
-
-  @@id([orderId, workflowId, taskId]) // composite id
-  @@index([orderId])
-  @@index([workflowId])
-  @@index([taskId])
-  @@index([statusId])
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
 }
