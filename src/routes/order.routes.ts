@@ -1,5 +1,5 @@
 import express from "express";
-import { createOrder, deleteOrder, getAllOrders, getOrderById, updateOrderWorkflows, getOrderWorkflowTaskStatuses } from "../controllers/order.controller.js";
+import { createOrder, deleteOrder, getAllOrders, getOrderById, updateOrderStatus } from "../controllers/order.controller.js";
 const orderRouter = express.Router();
 
 orderRouter.route('/orders')
@@ -8,9 +8,8 @@ orderRouter.route('/orders')
 
 orderRouter.route('/orders/:id')
     .get(getOrderById)
-    .put(updateOrderWorkflows)
     .delete(deleteOrder)
+    .patch(updateOrderStatus)
 
-orderRouter.route('/orders/:id/statuses')
-    .get(getOrderWorkflowTaskStatuses)
+
 export default orderRouter;

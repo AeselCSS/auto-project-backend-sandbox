@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Task } from '@prisma/client';
 import { Request, Response } from 'express';
 import errorHandler from "../utility/errorHandler.js";
 
@@ -6,25 +6,19 @@ const prisma = new PrismaClient({
     log: ['query', 'info', 'warn', 'error']
 });
 
-interface Task {
-    id: number;
-    name: string;
-    description: string;
-    time: number;
-}
-
 export const createTask = async (req: Request, res: Response): Promise<void> => {
     try {
-        const {name, description, time} = req.body;
+        const taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'> = {
+            ...req.body
+        };
         const task: Task = await prisma.task.create({
-            data: {name, description, time}
+            data: taskData
         });
-
         res.status(201).json(task);
     } catch (error) {
         errorHandler(error, res)
     }
-};
+}
 
 export const createManyTasks = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -50,35 +44,43 @@ export const getAllTasks = async (_req: Request, res: Response): Promise<void> =
     } catch (error) {
         errorHandler(error, res)
     }
-};
+}
 
 export const getTaskById = async (req: Request, res: Response): Promise<void> => {
     try {
         const {id} = req.params;
         const task: Task | null = await prisma.task.findUnique({
-            where: {id: Number(id)}
+            where: { id }
         });
+
+        if (!task) {
+            res.status(404).json({error: `Task with id ${id} not found`});
+            return;
+        }
+
         res.status(200).json(task);
     } catch (error) {
         errorHandler(error, res)
     }
-};
+}
 
 export const updateTask = async (req: Request, res: Response): Promise<void> => {
     try {
         const {id} = req.params;
         const {name, description, time} = req.body;
+        if (!name || !description || !time) {
+            res.status(400).json({error: 'Missing name, description or time'});
+            return;
+        }
         const task: Task | null = await prisma.task.update({
-            where: {id: Number(id)},
+            where: {id},
             data: {name, description, time}
         });
-        res.status(200).json(task);
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ error: error.message })
-        } else {
-            res.status(500).json({ error: 'An unknown error occurred.' })
-        }
+
+        task ? res.status(200).json(task) : res.status(404).json({error: `Task with id ${id} not found`});
+
+    } catch (error) {
+        errorHandler(error, res)
     }
 }
 
@@ -86,15 +88,12 @@ export const deleteTask = async (req: Request, res: Response): Promise<void> => 
     try {
         const {id} = req.params;
         const task: Task | null = await prisma.task.delete({
-            where: {id: Number(id)}
+            where: {id}
         });
-        res.status(200).json(task);
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ error: error.message })
-        } else {
-            res.status(500).json({ error: 'An unknown error occurred.' })
-        }
+
+        task ? res.status(200).json(task) : res.status(404).json({error: `Task with id ${id} not found`});
+    } catch (error) {
+        errorHandler(error, res)
     }
 }
 
@@ -102,11 +101,7 @@ export const deleteAllTasks = async (_req: Request, res: Response): Promise<void
     try {
         const tasks = await prisma.task.deleteMany();
         res.status(200).json(tasks);
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            res.status(500).json({ error: error.message })
-        } else {
-            res.status(500).json({ error: 'An unknown error occurred.' })
-        }
+    } catch (error) {
+        errorHandler(error, res)
     }
 }

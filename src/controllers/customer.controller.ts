@@ -23,14 +23,11 @@ export const createCustomer = async (req: Request, res: Response): Promise<void>
         const {firstName, lastName, address, zip, city, phone, email, password} = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
         const customer: Customer = await prisma.customer.create({
-            data: {firstName, lastName, roleId: 2, address, zip, city, phone, email, password: hashedPassword}
+            data: {firstName, lastName, role: 'CUSTOMER', address, zip, city, phone, email, password: hashedPassword}
         });
         res.status(201).json(customer);
     } catch (error) {
-        console.error(error); // Log the error
-        res.status(500).json({
-            error: error instanceof Error ? error.message : 'An unknown error occurred.'
-        });
+        errorHandler(error, res)
     }
 };
 
@@ -47,7 +44,7 @@ export const getCustomerById = async (req: Request, res: Response): Promise<void
     try {
         const {id} = req.params;
         const customer: Customer | null = await prisma.customer.findUnique({
-            where: {id: Number(id)}
+            where: {id: id}
         });
         res.status(200).json(customer);
     } catch (error) {
