@@ -96,7 +96,7 @@ export const setWorkflowInstanceStatusCompleted = async (workflowInstanceId: str
     }
 
     return prisma.workflowInstance.update({
-        where: {id: workflowInstance.orderId},
+        where: {id: workflowInstanceId},
         data: {status: 'COMPLETED'}
     });
 }

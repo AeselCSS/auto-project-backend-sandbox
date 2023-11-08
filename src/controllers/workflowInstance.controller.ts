@@ -34,7 +34,7 @@ export const startWorkflowInstance = async (req: Request, res: Response): Promis
         // step 1 - Check if order status is not IN_PROGRESS or COMPLETED
         const order = await workflowInstanceOrder(id);
 
-        if (order.status === 'IN_PROGRESS' || order.status === 'COMPLETED') {
+        if (order.status === 'COMPLETED') {
             res.status(400).json({error: `Order with id ${order.id} is already ${order.status}`});
             return;
         }
@@ -58,6 +58,8 @@ export const startWorkflowInstance = async (req: Request, res: Response): Promis
                     where: {id: firstTaskInstance.id},
                     data: {status: 'IN_PROGRESS'}
                 });
+
+                // step 3.1.3 -
                 return workflowInstance;
             }
 
